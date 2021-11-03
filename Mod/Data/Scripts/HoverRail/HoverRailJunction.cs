@@ -1,17 +1,15 @@
 using System;
 using System.Text;
 using System.Collections.Generic;
-using Sandbox;
 using Sandbox.ModAPI;
 using Sandbox.ModAPI.Interfaces.Terminal;
-using Sandbox.Common;
-using Sandbox.Game.Entities;
-using Sandbox.Game.EntityComponents;
 using Sandbox.Common.ObjectBuilders;
-using Sandbox.Common.Components;
-using VRage.Game;
 using VRage.Utils;
 using VRageMath;
+using VRage.Game.Components;
+using VRage.ObjectBuilders;
+using VRage.ModAPI;
+using VRage.Game.ModAPI;
 
 namespace HoverRail
 {
@@ -21,7 +19,7 @@ namespace HoverRail
         protected MatrixD short_initial, long_initial;
         protected string swivel_short, swivel_long;
 
-        public override void Init(Sandbox.Common.ObjectBuilders.MyObjectBuilder_EntityBase objectBuilder)
+        public override void Init(MyObjectBuilder_EntityBase objectBuilder)
         {
             base.Init(objectBuilder);
             // TODO freeze junctions when they're not moving
@@ -50,7 +48,7 @@ namespace HoverRail
     [MyEntityComponentDescriptor(typeof(MyObjectBuilder_UpgradeModule), false, "HoverRail_Junction_Left_10x-12x_Large")]
     public class HoverRailJunction_12x_Left : HoverRailJunction
     {
-        public override void Init(Sandbox.Common.ObjectBuilders.MyObjectBuilder_EntityBase objectBuilder)
+        public override void Init(MyObjectBuilder_EntityBase objectBuilder)
         {
             base.Init(objectBuilder);
             swivel_short = "jl_swivel_left";
@@ -68,16 +66,25 @@ namespace HoverRail
             var angle = ((bool)SettingsStore.Get(Entity, "junction_turn", false)) ? 8 : 0;
 
             var sw_short = Entity.GetSubpart(swivel_short);
-            sw_short.PositionComp.LocalMatrix = Matrix.CreateRotationY((float)(angle * Math.PI / 180.0)) * short_initial;
+            //var sw_world_ref = sw_short.PositionComp.WorldMatrixRef;
+            //sw_world_ref.SetRotationAndScale(Matrix.CreateRotationY((float)(angle * Math.PI / 180.0)) * short_initial);
+            //sw_short.PositionComp.LocalMatrix = Matrix.CreateRotationY((float)(angle * Math.PI / 180.0)) * short_initial;
+            Matrix short_matrix = Matrix.CreateRotationY((float)(angle * Math.PI / 180.0)) * short_initial;
+            sw_short.PositionComp.SetLocalMatrix(ref short_matrix);
+
             var sw_long = Entity.GetSubpart(swivel_long);
-            sw_long.PositionComp.LocalMatrix = Matrix.CreateRotationY((float)(angle * Math.PI / 180.0)) * long_initial;
+            //var sw_long_ref = sw_long.PositionComp.WorldMatrixRef;
+            //sw_long_ref.SetRotationAndScale(Matrix.CreateRotationY((float)(angle * Math.PI / 180.0)) * long_initial);
+            //sw_long.PositionComp.LocalMatrix = Matrix.CreateRotationY((float)(angle * Math.PI / 180.0)) * long_initial;
+            Matrix long_matrix = Matrix.CreateRotationY((float)(angle * Math.PI / 180.0)) * long_initial;
+            sw_long.PositionComp.SetLocalMatrix(ref long_matrix);
         }
     }
 
     [MyEntityComponentDescriptor(typeof(MyObjectBuilder_UpgradeModule), false, "HoverRail_Junction_Right_10x-12x_Large")]
     public class HoverRailJunction_12x_Right : HoverRailJunction
     {
-        public override void Init(Sandbox.Common.ObjectBuilders.MyObjectBuilder_EntityBase objectBuilder)
+        public override void Init(MyObjectBuilder_EntityBase objectBuilder)
         {
             base.Init(objectBuilder);
             swivel_short = "jr_swivel_right";
@@ -95,9 +102,14 @@ namespace HoverRail
             var angle = ((bool)SettingsStore.Get(Entity, "junction_turn", false)) ? -8 : 0;
 
             var sw_short = Entity.GetSubpart(swivel_short);
-            sw_short.PositionComp.LocalMatrix = Matrix.CreateRotationY((float)(angle * Math.PI / 180.0)) * short_initial;
+            //sw_short.PositionComp.LocalMatrix = Matrix.CreateRotationY((float)(angle * Math.PI / 180.0)) * short_initial;
+            Matrix short_matrix = Matrix.CreateRotationY((float)(angle * Math.PI / 180.0)) * short_initial;
+            sw_short.PositionComp.SetLocalMatrix(ref short_matrix);
+
             var sw_long = Entity.GetSubpart(swivel_long);
-            sw_long.PositionComp.LocalMatrix = Matrix.CreateRotationY((float)(angle * Math.PI / 180.0)) * long_initial;
+            //sw_long.PositionComp.LocalMatrix = Matrix.CreateRotationY((float)(angle * Math.PI / 180.0)) * long_initial;
+            Matrix long_matrix = Matrix.CreateRotationY((float)(angle * Math.PI / 180.0)) * long_initial;
+            sw_long.PositionComp.SetLocalMatrix(ref long_matrix);
         }
     }
 
@@ -235,9 +247,9 @@ namespace HoverRail
                 tracking |= picked_weight > 0;
             }
 
-            // from swivel space into parent local space, recentering the rail piece for straight_guidance
-            var swivel_long_mat = MatrixD.CreateTranslation(1.25 * 4, 0, 0) * this.cubeBlock.GetSubpart(swivel_long).PositionComp.LocalMatrix;
-            var swivel_short_mat = MatrixD.CreateTranslation(1.25 * 3, 0, 0) * this.cubeBlock.GetSubpart(swivel_short).PositionComp.LocalMatrix;
+            // from swivel space into parent local space, recentering the rail piece for straight_guidance - sw_short.PositionComp.WorldMatrixRef
+            var swivel_long_mat = MatrixD.CreateTranslation(1.25 * 4, 0, 0) * this.cubeBlock.GetSubpart(swivel_long).PositionComp.LocalMatrixRef;
+            var swivel_short_mat = MatrixD.CreateTranslation(1.25 * 3, 0, 0) * this.cubeBlock.GetSubpart(swivel_short).PositionComp.LocalMatrixRef;
 
             var sw_long_world_mat = swivel_long_mat * this.cubeBlock.WorldMatrix;
             var sw_short_world_mat = swivel_short_mat * this.cubeBlock.WorldMatrix;

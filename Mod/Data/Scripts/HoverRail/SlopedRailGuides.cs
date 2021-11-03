@@ -1,9 +1,10 @@
 using System;
 using VRageMath;
-using VRage.Utils;
+using VRage.Game.ModAPI;
 
-namespace HoverRail {
-	static class MinSearch {
+namespace HoverRail
+{
+    static class MinSearch {
 		public static bool find_smallest(ref double where, Func<double, double> fun, double initial_estimate, double from, double to, int iters) {
 			Func<double, double> dfun = f => (fun(f + 0.001) - fun(f - 0.001)) * (1.0 / 0.002);
 			double left = dfun(from), right = dfun(to);

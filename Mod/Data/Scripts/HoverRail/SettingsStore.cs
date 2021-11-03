@@ -4,6 +4,8 @@ using System.Linq;
 using System.Collections.Generic;
 using VRage.Serialization;
 using VRage.Utils;
+using VRage.ModAPI;
+using Sandbox.ModAPI;
 
 namespace HoverRail {
 	static class SettingsStore {
@@ -64,7 +66,8 @@ namespace HoverRail {
 			}
 		}
 		public static void SetupNetworkHandlers() {
-			MyAPIGateway.Multiplayer.RegisterMessageHandler(HOVERRAIL_MESSAGE_ID, HandleMessage);
+			//MyAPIGateway.Multiplayer.RegisterMessageHandler(HOVERRAIL_MESSAGE_ID, HandleMessage);
+			MyAPIGateway.Multiplayer.RegisterSecureMessageHandler(HOVERRAIL_MESSAGE_ID, HandleMessage);
 		}
 		public static bool ByteStartsWith(byte[] message, byte[] cmp) {
 			if (message.Length < cmp.Length) return false;
@@ -73,7 +76,7 @@ namespace HoverRail {
 			}
 			return true;
 		}
-		public static void HandleMessage(byte[] data) {
+		public static void HandleMessage(ushort handlerId, byte[] data, ulong steamId, bool isServer) {
 			var b_rebroadcast_marker = Encoding.UTF8.GetBytes(REBROADCAST_MARKER);
 			if (ByteStartsWith(data, b_rebroadcast_marker)) {
 				if (MyAPIGateway.Multiplayer.IsServer) return; // discard

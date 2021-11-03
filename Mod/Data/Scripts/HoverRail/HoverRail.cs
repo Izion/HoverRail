@@ -1,8 +1,9 @@
 using Sandbox.ModAPI;
-using Sandbox.Common;
+using VRage.Game.Components;
 
-namespace HoverRail {
-	[MySessionComponentDescriptor(MyUpdateOrder.BeforeSimulation)]
+namespace HoverRail
+{
+    [MySessionComponentDescriptor(MyUpdateOrder.BeforeSimulation)]
 	public class HoverRail : MySessionComponentBase {
 		bool inited = false;
 		public void Init() {

@@ -1,4 +1,5 @@
 using System;
+using VRage.Game.ModAPI;
 using VRageMath;
 
 static class StraightRailConstants {

@@ -1,10 +1,11 @@
-using System;
-using Sandbox.Game.Entities;
-using VRage.Utils;
+using VRage.Game.Components;
+using VRage.Game.ModAPI;
+using VRage.ModAPI;
 using VRageMath;
 
-namespace HoverRail {
-	abstract class RailGuide {
+namespace HoverRail
+{
+    abstract class RailGuide {
 		public IMyCubeBlock cubeBlock;
 		public string subtypeId;
 		public RailGuide(IMyCubeBlock cubeBlock) {
