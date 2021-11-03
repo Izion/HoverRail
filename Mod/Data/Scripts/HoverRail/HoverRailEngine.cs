@@ -190,6 +190,7 @@ namespace HoverRail
             float height = (float)SettingsStore.Get(Entity, "height_offset", 1.25f);
 
             double forceLimit = (double)(float)SettingsStore.Get(Entity, "force_slider", 100000.0f);
+            bool horizontalForce = (bool)SettingsStore.Get(Entity, "horizontal_force", true);
 
             var hoverCenter = Entity.WorldMatrix.Translation;
             var searchCenter = Entity.WorldMatrix.Translation + Entity.WorldMatrix.Down * 2.499;
@@ -202,7 +203,7 @@ namespace HoverRail
 
             foreach (var guide in activeRailGuides)
             {
-                if (!guide.getGuidance(hoverCenter, ref rail_pos, ref weight_sum, height))
+                if (!guide.getGuidance(hoverCenter, horizontalForce, ref rail_pos, ref weight_sum, height))
                 {
                     // lost rail lock
                     lostGuides.Add(guide);
@@ -230,7 +231,7 @@ namespace HoverRail
 
                     if (guide != null)
                     {
-                        var test = guide.getGuidance(hoverCenter, ref rail_pos, ref weight_sum, height);
+                        var test = guide.getGuidance(hoverCenter, horizontalForce, ref rail_pos, ref weight_sum, height);
 
                         if (test)
                         {
@@ -350,7 +351,7 @@ namespace HoverRail
         public static bool initialized = false;
         public static IMyTerminalControlSlider forceSlider, heightSlider, damperSlider;
         public static IMyTerminalAction lowerHeightAction, raiseHeightAction;
-        public static IMyTerminalControlOnOffSwitch soundOnOffSwitch;
+        public static IMyTerminalControlOnOffSwitch soundOnOffSwitch, horizontalForceSwitch;
 
         public static bool BlockIsEngine(IMyTerminalBlock block)
         {
@@ -419,6 +420,15 @@ namespace HoverRail
             soundOnOffSwitch.Visible = BlockIsEngine;
             MyAPIGateway.TerminalControls.AddControl<IMyUpgradeModule>(soundOnOffSwitch);
 
+            horizontalForceSwitch = MyAPIGateway.TerminalControls.CreateControl<IMyTerminalControlOnOffSwitch, IMyUpgradeModule>("HoverRail_HorizontalForce");
+            horizontalForceSwitch.Title = MyStringId.GetOrCompute("Horizontal Force");
+            horizontalForceSwitch.Tooltip = MyStringId.GetOrCompute("Whether the engine exerts horizontal force.");
+            horizontalForceSwitch.Getter = b => (bool)SettingsStore.Get(b, "horizontal_force", true);
+            horizontalForceSwitch.Setter = (b, v) => SettingsStore.Set(b, "horizontal_force", v);
+            horizontalForceSwitch.OnText = MyStringId.GetOrCompute("On");
+            horizontalForceSwitch.OffText = MyStringId.GetOrCompute("Off");
+            horizontalForceSwitch.Visible = BlockIsEngine;
+            MyAPIGateway.TerminalControls.AddControl<IMyUpgradeModule>(horizontalForceSwitch);
 
             forceSlider = MyAPIGateway.TerminalControls.CreateControl<IMyTerminalControlSlider, IMyUpgradeModule>("HoverRail_ForceLimit");
             forceSlider.Title = MyStringId.GetOrCompute("Force Limit");

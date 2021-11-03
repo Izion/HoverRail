@@ -174,9 +174,9 @@ namespace HoverRail
             weight += mix_weight;
         }
 
-        public override bool getGuidance(Vector3D pos, ref Vector3D guide, ref float weight, float height)
+        public override bool getGuidance(Vector3D pos, bool horizontalForce, ref Vector3D guide, ref float weight, float height)
         {
-            if (!base.getGuidance(pos, ref guide, ref weight, height)) return false;
+            if (!base.getGuidance(pos, horizontalForce, ref guide, ref weight, height)) return false;
 
             var localCoords = Vector3D.Transform(pos, this.cubeBlock.WorldMatrixNormalizedInv);
             // MyLog.Default.WriteLine(String.Format("local coord is {0} [{1}]", localCoords, flip_curve_z));
@@ -210,12 +210,14 @@ namespace HoverRail
                 Vector3D straight_guide = new Vector3D(); float straight_weight = 0.0f;
                 StraightRailGuide.straight_guidance(
                     7 * 1.25f,
+                    horizontalForce,
                     straight_outer_long_to_junction * this.cubeBlock.WorldMatrix,
                     Vector3D.Transform(localCoords, junction_to_straight_outer_long),
                     ref straight_guide, ref straight_weight, height
                 );
                 bool inner_straight_was_picked = StraightRailGuide.straight_guidance(
                     8 * 1.25f,
+                    horizontalForce,
                     straight_inner_long_to_junction * this.cubeBlock.WorldMatrix,
                     Vector3D.Transform(localCoords, junction_to_straight_inner_long),
                     ref straight_guide, ref straight_weight, height
@@ -237,6 +239,7 @@ namespace HoverRail
                 // (but we still have to do the pick process so we don't break the snapping)
                 if (curve_guide_was_picked && outer_curve_was_picked
                 || !curve_guide_was_picked && inner_straight_was_picked
+                || !horizontalForce
                 )
                 {
                     picked_guide = new Vector3D(localCoords.X, height - 1.25, localCoords.Z);
@@ -256,6 +259,7 @@ namespace HoverRail
 
             tracking |= StraightRailGuide.straight_guidance(
                 4 * 1.25f,
+                horizontalForce,
                 sw_long_world_mat,
                 Vector3D.Transform(pos, MatrixD.Invert(sw_long_world_mat)),
                 // subpart rails are at 0, but straight_guidance thinks they are at -1.25
@@ -265,6 +269,7 @@ namespace HoverRail
 
             tracking |= StraightRailGuide.straight_guidance(
                 3 * 1.25f,
+                horizontalForce,
                 sw_short_world_mat,
                 Vector3D.Transform(pos, MatrixD.Invert(sw_short_world_mat)),
                 ref guide, ref weight, height + 1.25f
@@ -272,6 +277,7 @@ namespace HoverRail
 
             tracking |= StraightRailGuide.straight_guidance(
                 1.25f,
+                horizontalForce,
                 straight_outer_short_to_junction * this.cubeBlock.WorldMatrix,
                 Vector3D.Transform(localCoords, junction_to_straight_outer_short),
                 ref guide, ref weight, height,
@@ -279,6 +285,7 @@ namespace HoverRail
             );
             tracking |= StraightRailGuide.straight_guidance(
                 1.25f,
+                horizontalForce,
                 straight_inner_short_to_junction * this.cubeBlock.WorldMatrix,
                 Vector3D.Transform(localCoords, junction_to_straight_inner_short),
                 ref guide, ref weight, height,

@@ -9,8 +9,8 @@ namespace HoverRail {
 		public Curve90_RailGuide(IMyCubeBlock cubeBlock, int size) : base(cubeBlock) {
 			this.size = size;
 		}
-		public override bool getGuidance(Vector3D pos, ref Vector3D guide, ref float weight, float height) {
-			if (!base.getGuidance(pos, ref guide, ref weight, height)) return false;
+		public override bool getGuidance(Vector3D pos, bool horizontalForce, ref Vector3D guide, ref float weight, float height) {
+			if (!base.getGuidance(pos, horizontalForce, ref guide, ref weight, height)) return false;
 
 			var localCoords = Vector3D.Transform(pos, this.cubeBlock.WorldMatrixNormalizedInv);
 
@@ -27,9 +27,11 @@ namespace HoverRail {
 
 			var radius = Math.Sqrt(localCoords2.X * localCoords2.X + localCoords2.Z * localCoords2.Z);
 
-			var planarCoords = new Vector3D(radius, localCoords2.Y, 0.0);
-			var rail_offset = this.size * 2.5 - 1.25;
-			var localRail = new Vector3D(edgesize / 2 - Math.Sin(angle) * rail_offset, height - 1.25, edgesize / 2 - Math.Cos(angle) * rail_offset);
+			var railOffset = this.size * 2.5 - 1.25;
+			var localRail = new Vector3D(edgesize / 2 - Math.Sin(angle) * railOffset, height - 1.25, edgesize / 2 - Math.Cos(angle) * railOffset);
+			if (!horizontalForce) {
+				localRail = new Vector3D(localCoords.X, height - 1.25, localCoords.Z);
+			}
 
 			var localDirToRail = localRail - localCoords;
 
@@ -57,10 +59,10 @@ namespace HoverRail {
 		public Curve90_10x_12x_RailGuide(IMyCubeBlock cubeBlock) : base(cubeBlock) { }
 
 		public static bool curved_guidance(Vector3D localCoords, MatrixD worldMat,
-			out bool outer_curve_was_picked,
+			out bool outerCurve,
 			ref Vector3D guide, ref float weight, float height, bool lean = true
 		) {
-			outer_curve_was_picked = false; // default
+			outerCurve = false; // default
 			if (localCoords.Y < -1.25 || localCoords.Y > 2.60) return false; // TODO lower?
 			// -15 .. 15
 			var localCoords2 = new Vector3D(15, 0, 15) - localCoords; // 0 .. 30
@@ -73,7 +75,7 @@ namespace HoverRail {
 			
 			// push the outer rail up a bit
 			var leanHeight = 0.0;
-			if (lean) leanHeight = Math.Sin(angle * 2); // 0 .. 1 .. 0
+			// if (lean) leanHeight = Math.Sin(angle * 2); // 0 .. 1 .. 0
 			// curve of rail matches approximately
 			// x=23.75*cos(angle)*(1+pow(fabs(sin(angle*2)), 1.6)*0.063)
 			// y=23.75*sin(angle)*(1+pow(fabs(sin(angle*2)), 1.6)*0.063)
@@ -91,8 +93,8 @@ namespace HoverRail {
 			var len1 = localDirToRail1.Length();
 			var len2 = localDirToRail2.Length();
 			double len;
-			if (len1 < len2) { localDirToRail = localDirToRail1; len = len1; outer_curve_was_picked = true; }
-			else { localDirToRail = localDirToRail2; len = len2; outer_curve_was_picked = false; }
+			if (len1 < len2) { localDirToRail = localDirToRail1; len = len1; outerCurve = true; }
+			else { localDirToRail = localDirToRail2; len = len2; outerCurve = false; }
 			if (len > 1.75) return false;
 			
 			var worldRail = Vector3D.Transform(localCoords + localDirToRail, worldMat);
@@ -102,12 +104,19 @@ namespace HoverRail {
 			
 			return true;
 		}
-		public override bool getGuidance(Vector3D pos, ref Vector3D guide, ref float weight, float height) {
-			if (!base.getGuidance(pos, ref guide, ref weight, height)) return false;
+		public override bool getGuidance(Vector3D pos, bool horizontalForce, ref Vector3D guide, ref float weight, float height) {
+			if (!base.getGuidance(pos, horizontalForce, ref guide, ref weight, height)) return false;
 			
 			var localCoords = Vector3D.Transform(pos, this.cubeBlock.WorldMatrixNormalizedInv);
-			bool ignore;
-			return Curve90_10x_12x_RailGuide.curved_guidance(localCoords, this.cubeBlock.WorldMatrix, out ignore, ref guide, ref weight, height);
+			bool outerCurve;
+			if (!Curve90_10x_12x_RailGuide.curved_guidance(localCoords, this.cubeBlock.WorldMatrix, out outerCurve, ref guide, ref weight, height))
+				return false;
+			// ignore horizontal guidance in outer curve
+			if (outerCurve || !horizontalForce) {
+				guide = new Vector3D(localCoords.X, height - 1.25, localCoords.Z);
+				guide = Vector3D.Transform(guide, this.cubeBlock.WorldMatrix) * weight;
+			}
+			return true;
 		}
 	}
 }
