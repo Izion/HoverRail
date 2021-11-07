@@ -1,17 +1,15 @@
 using System;
 using System.Text;
 using System.Collections.Generic;
-using Sandbox;
 using Sandbox.ModAPI;
 using Sandbox.ModAPI.Interfaces.Terminal;
-using Sandbox.Common;
-using Sandbox.Game.Entities;
-using Sandbox.Game.EntityComponents;
 using Sandbox.Common.ObjectBuilders;
-using Sandbox.Common.Components;
-using VRage.Game;
 using VRage.Utils;
 using VRageMath;
+using VRage.Game.Components;
+using VRage.ObjectBuilders;
+using VRage.ModAPI;
+using VRage.Game.ModAPI;
 
 namespace HoverRail
 {
@@ -21,7 +19,7 @@ namespace HoverRail
         protected MatrixD short_initial, long_initial;
         protected string swivel_short, swivel_long;
 
-        public override void Init(Sandbox.Common.ObjectBuilders.MyObjectBuilder_EntityBase objectBuilder)
+        public override void Init(MyObjectBuilder_EntityBase objectBuilder)
         {
             base.Init(objectBuilder);
             // TODO freeze junctions when they're not moving
@@ -50,7 +48,7 @@ namespace HoverRail
     [MyEntityComponentDescriptor(typeof(MyObjectBuilder_UpgradeModule), false, "HoverRail_Junction_Left_10x-12x_Large")]
     public class HoverRailJunction_12x_Left : HoverRailJunction
     {
-        public override void Init(Sandbox.Common.ObjectBuilders.MyObjectBuilder_EntityBase objectBuilder)
+        public override void Init(MyObjectBuilder_EntityBase objectBuilder)
         {
             base.Init(objectBuilder);
             swivel_short = "jl_swivel_left";
@@ -68,16 +66,25 @@ namespace HoverRail
             var angle = ((bool)SettingsStore.Get(Entity, "junction_turn", false)) ? 8 : 0;
 
             var sw_short = Entity.GetSubpart(swivel_short);
-            sw_short.PositionComp.LocalMatrix = Matrix.CreateRotationY((float)(angle * Math.PI / 180.0)) * short_initial;
+            //var sw_world_ref = sw_short.PositionComp.WorldMatrixRef;
+            //sw_world_ref.SetRotationAndScale(Matrix.CreateRotationY((float)(angle * Math.PI / 180.0)) * short_initial);
+            //sw_short.PositionComp.LocalMatrix = Matrix.CreateRotationY((float)(angle * Math.PI / 180.0)) * short_initial;
+            Matrix short_matrix = Matrix.CreateRotationY((float)(angle * Math.PI / 180.0)) * short_initial;
+            sw_short.PositionComp.SetLocalMatrix(ref short_matrix);
+
             var sw_long = Entity.GetSubpart(swivel_long);
-            sw_long.PositionComp.LocalMatrix = Matrix.CreateRotationY((float)(angle * Math.PI / 180.0)) * long_initial;
+            //var sw_long_ref = sw_long.PositionComp.WorldMatrixRef;
+            //sw_long_ref.SetRotationAndScale(Matrix.CreateRotationY((float)(angle * Math.PI / 180.0)) * long_initial);
+            //sw_long.PositionComp.LocalMatrix = Matrix.CreateRotationY((float)(angle * Math.PI / 180.0)) * long_initial;
+            Matrix long_matrix = Matrix.CreateRotationY((float)(angle * Math.PI / 180.0)) * long_initial;
+            sw_long.PositionComp.SetLocalMatrix(ref long_matrix);
         }
     }
 
     [MyEntityComponentDescriptor(typeof(MyObjectBuilder_UpgradeModule), false, "HoverRail_Junction_Right_10x-12x_Large")]
     public class HoverRailJunction_12x_Right : HoverRailJunction
     {
-        public override void Init(Sandbox.Common.ObjectBuilders.MyObjectBuilder_EntityBase objectBuilder)
+        public override void Init(MyObjectBuilder_EntityBase objectBuilder)
         {
             base.Init(objectBuilder);
             swivel_short = "jr_swivel_right";
@@ -95,9 +102,14 @@ namespace HoverRail
             var angle = ((bool)SettingsStore.Get(Entity, "junction_turn", false)) ? -8 : 0;
 
             var sw_short = Entity.GetSubpart(swivel_short);
-            sw_short.PositionComp.LocalMatrix = Matrix.CreateRotationY((float)(angle * Math.PI / 180.0)) * short_initial;
+            //sw_short.PositionComp.LocalMatrix = Matrix.CreateRotationY((float)(angle * Math.PI / 180.0)) * short_initial;
+            Matrix short_matrix = Matrix.CreateRotationY((float)(angle * Math.PI / 180.0)) * short_initial;
+            sw_short.PositionComp.SetLocalMatrix(ref short_matrix);
+
             var sw_long = Entity.GetSubpart(swivel_long);
-            sw_long.PositionComp.LocalMatrix = Matrix.CreateRotationY((float)(angle * Math.PI / 180.0)) * long_initial;
+            //sw_long.PositionComp.LocalMatrix = Matrix.CreateRotationY((float)(angle * Math.PI / 180.0)) * long_initial;
+            Matrix long_matrix = Matrix.CreateRotationY((float)(angle * Math.PI / 180.0)) * long_initial;
+            sw_long.PositionComp.SetLocalMatrix(ref long_matrix);
         }
     }
 
@@ -162,9 +174,9 @@ namespace HoverRail
             weight += mix_weight;
         }
 
-        public override bool getGuidance(Vector3D pos, ref Vector3D guide, ref float weight, float height)
+        public override bool getGuidance(Vector3D pos, bool horizontalForce, ref Vector3D guide, ref float weight, float height)
         {
-            if (!base.getGuidance(pos, ref guide, ref weight, height)) return false;
+            if (!base.getGuidance(pos, horizontalForce, ref guide, ref weight, height)) return false;
 
             var localCoords = Vector3D.Transform(pos, this.cubeBlock.WorldMatrixNormalizedInv);
             // MyLog.Default.WriteLine(String.Format("local coord is {0} [{1}]", localCoords, flip_curve_z));
@@ -198,12 +210,14 @@ namespace HoverRail
                 Vector3D straight_guide = new Vector3D(); float straight_weight = 0.0f;
                 StraightRailGuide.straight_guidance(
                     7 * 1.25f,
+                    horizontalForce,
                     straight_outer_long_to_junction * this.cubeBlock.WorldMatrix,
                     Vector3D.Transform(localCoords, junction_to_straight_outer_long),
                     ref straight_guide, ref straight_weight, height
                 );
                 bool inner_straight_was_picked = StraightRailGuide.straight_guidance(
                     8 * 1.25f,
+                    horizontalForce,
                     straight_inner_long_to_junction * this.cubeBlock.WorldMatrix,
                     Vector3D.Transform(localCoords, junction_to_straight_inner_long),
                     ref straight_guide, ref straight_weight, height
@@ -225,6 +239,7 @@ namespace HoverRail
                 // (but we still have to do the pick process so we don't break the snapping)
                 if (curve_guide_was_picked && outer_curve_was_picked
                 || !curve_guide_was_picked && inner_straight_was_picked
+                || !horizontalForce
                 )
                 {
                     picked_guide = new Vector3D(localCoords.X, height - 1.25, localCoords.Z);
@@ -235,15 +250,16 @@ namespace HoverRail
                 tracking |= picked_weight > 0;
             }
 
-            // from swivel space into parent local space, recentering the rail piece for straight_guidance
-            var swivel_long_mat = MatrixD.CreateTranslation(1.25 * 4, 0, 0) * this.cubeBlock.GetSubpart(swivel_long).PositionComp.LocalMatrix;
-            var swivel_short_mat = MatrixD.CreateTranslation(1.25 * 3, 0, 0) * this.cubeBlock.GetSubpart(swivel_short).PositionComp.LocalMatrix;
+            // from swivel space into parent local space, recentering the rail piece for straight_guidance - sw_short.PositionComp.WorldMatrixRef
+            var swivel_long_mat = MatrixD.CreateTranslation(1.25 * 4, 0, 0) * this.cubeBlock.GetSubpart(swivel_long).PositionComp.LocalMatrixRef;
+            var swivel_short_mat = MatrixD.CreateTranslation(1.25 * 3, 0, 0) * this.cubeBlock.GetSubpart(swivel_short).PositionComp.LocalMatrixRef;
 
             var sw_long_world_mat = swivel_long_mat * this.cubeBlock.WorldMatrix;
             var sw_short_world_mat = swivel_short_mat * this.cubeBlock.WorldMatrix;
 
             tracking |= StraightRailGuide.straight_guidance(
                 4 * 1.25f,
+                horizontalForce,
                 sw_long_world_mat,
                 Vector3D.Transform(pos, MatrixD.Invert(sw_long_world_mat)),
                 // subpart rails are at 0, but straight_guidance thinks they are at -1.25
@@ -253,6 +269,7 @@ namespace HoverRail
 
             tracking |= StraightRailGuide.straight_guidance(
                 3 * 1.25f,
+                horizontalForce,
                 sw_short_world_mat,
                 Vector3D.Transform(pos, MatrixD.Invert(sw_short_world_mat)),
                 ref guide, ref weight, height + 1.25f
@@ -260,6 +277,7 @@ namespace HoverRail
 
             tracking |= StraightRailGuide.straight_guidance(
                 1.25f,
+                horizontalForce,
                 straight_outer_short_to_junction * this.cubeBlock.WorldMatrix,
                 Vector3D.Transform(localCoords, junction_to_straight_outer_short),
                 ref guide, ref weight, height,
@@ -267,6 +285,7 @@ namespace HoverRail
             );
             tracking |= StraightRailGuide.straight_guidance(
                 1.25f,
+                horizontalForce,
                 straight_inner_short_to_junction * this.cubeBlock.WorldMatrix,
                 Vector3D.Transform(localCoords, junction_to_straight_inner_short),
                 ref guide, ref weight, height,

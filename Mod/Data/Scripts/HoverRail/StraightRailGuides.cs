@@ -1,4 +1,5 @@
 using System;
+using VRage.Game.ModAPI;
 using VRageMath;
 
 static class StraightRailConstants {
@@ -12,7 +13,7 @@ namespace HoverRail {
 		float halfsize;
 		public StraightRailGuide(IMyCubeBlock cubeBlock, float halfsize) : base(cubeBlock) { this.halfsize = halfsize; }
 		// also used in sloped rail
-		public static bool straight_guidance(float halfsize, MatrixD cubeMatrix, Vector3D localCoords,
+		public static bool straight_guidance(float halfsize, bool horizontalForce, MatrixD cubeMatrix, Vector3D localCoords,
 			ref Vector3D guide, ref float weight, float height,
 			bool apply_overhang = true
 		) {
@@ -33,17 +34,17 @@ namespace HoverRail {
 				myWeight = 1.0f;
 			}
 			
-			var localRail = new Vector3D(localCoords.X, height - 1.25, 0);
+			var localRail = new Vector3D(localCoords.X, height - 1.25, horizontalForce ? 0 : localCoords.Z);
 			// DebugDraw.Sphere(Vector3D.Transform(localRail, cubeMatrix), 0.2f, Color.Red);
 			weight += myWeight;
 			guide += Vector3D.Transform(localRail, cubeMatrix) * myWeight;
 			return true;
 		}
-		public override bool getGuidance(Vector3D pos, ref Vector3D guide, ref float weight, float height) {
-			if (!base.getGuidance(pos, ref guide, ref weight, height)) return false;
+		public override bool getGuidance(Vector3D pos, bool horizontalForce, ref Vector3D guide, ref float weight, float height) {
+			if (!base.getGuidance(pos, horizontalForce, ref guide, ref weight, height)) return false;
 			
 			var localCoords = Vector3D.Transform(pos, this.cubeBlock.WorldMatrixNormalizedInv);
-			return straight_guidance(halfsize, this.cubeBlock.WorldMatrix, localCoords, ref guide, ref weight, height);
+			return straight_guidance(halfsize, horizontalForce, this.cubeBlock.WorldMatrix, localCoords, ref guide, ref weight, height);
 		}
 	}
 	class Straight1xRailGuide : StraightRailGuide {

@@ -14,7 +14,7 @@ using VRage.ModAPI;
 
 namespace HoverRail
 {
-    public class HoverRailEngine : MyGameLogicComponent
+    public class HoverEngine : MyGameLogicComponent
     {
         const float MAX_POWER_USAGE_MW = 1f;
         const float FORCE_POWER_COST_MW_N = 0.0000001f;
@@ -45,10 +45,10 @@ namespace HoverRail
 
         void EngineCustomInfo(IMyTerminalBlock block, StringBuilder builder)
         {
-            builder.AppendLine(String.Format("Required Power: {0}W", EngineUI.SIFormat(power_usage * 1000000)));
-            builder.AppendLine(String.Format("Max Required Power: {0}W", EngineUI.SIFormat(MAX_POWER_USAGE_MW * 1000000)));
-            builder.AppendLine(String.Format("Current Height: {0}M", (float)SettingsStore.Get(Entity, "height_offset", 1.25f)));
-            builder.AppendLine(String.Format("Target Height: {0}M", (float)SettingsStore.Get(Entity, "height_target", 1.25f)));
+            builder.AppendLine(String.Format("Required Power: {0}W", EngineUIMini.SIFormat(power_usage * 1000000)));
+            builder.AppendLine(String.Format("Max Required Power: {0}W", EngineUIMini.SIFormat(MAX_POWER_USAGE_MW * 1000000)));
+            builder.AppendLine(String.Format("Current Height: {0}M", (float)SettingsStore.Get(Entity, "height_offset", EngineUIMini.DefaultHeightM)));
+            builder.AppendLine(String.Format("Target Height: {0}M", (float)SettingsStore.Get(Entity, "height_target", EngineUIMini.DefaultHeightM)));
         }
 
         // init power usage
@@ -102,13 +102,7 @@ namespace HoverRail
         public void InitLate()
         {
             block_initialized = true;
-
-            // Remove other file no need to use, check block type here and init the correct UI
-
-
-
-
-            if (!EngineUI.initialized) EngineUI.InitLate(Entity as IMyTerminalBlock);
+            if (!EngineUIMini.initialized) EngineUIMini.InitLate(Entity as IMyTerminalBlock);
         }
         static int attachcount;
         int id;
@@ -131,7 +125,7 @@ namespace HoverRail
             // People kept reporting that the engine hum was audible at any distance.
             // I have no fucking clue why that would be the case, but it was probably super annoying, so the hum is just off now.
             // ---
-            // Added this as a terminal option may have been a game bug - testing
+            // Added this as a terminal option - testing
 
             if ((bool)SettingsStore.Get(Entity, "sound_toggle", false))
             {
@@ -183,13 +177,11 @@ namespace HoverRail
             }
             // MyLog.Default.WriteLine(String.Format("power ratio is {0}", power_ratio));
 
-            // Changing height can be janky, need to test a gradual change method
-
             ChangeEngineHeight();
 
-            float height = (float)SettingsStore.Get(Entity, "height_offset", 1.25f);
+            float height = (float)SettingsStore.Get(Entity, "height_offset", EngineUIMini.DefaultHeightM);
 
-            double forceLimit = (double)(float)SettingsStore.Get(Entity, "force_slider", 100000.0f);
+            double forceLimit = (double)(float)SettingsStore.Get(Entity, "force_slider", EngineUIMini.DefaultForceMWN);
             bool horizontalForce = (bool)SettingsStore.Get(Entity, "horizontal_force", true);
 
             var hoverCenter = Entity.WorldMatrix.Translation;
@@ -306,8 +298,8 @@ namespace HoverRail
 
         private void ChangeEngineHeight()
         {
-            float height = (float)SettingsStore.Get(Entity, "height_offset", 1.25f);
-            float target = (float)SettingsStore.Get(Entity, "height_target", 1.25f);
+            float height = (float)SettingsStore.Get(Entity, "height_offset", EngineUIMini.DefaultHeightM);
+            float target = (float)SettingsStore.Get(Entity, "height_target", EngineUIMini.DefaultHeightM);
 
             if (target != height)
             {
@@ -325,40 +317,24 @@ namespace HoverRail
         }
     }
 
-    [MyEntityComponentDescriptor(typeof(MyObjectBuilder_UpgradeModule), false, "HoverRail_Engine_Large")]
-    public class HoverRailEngineLarge : HoverRailEngine
-    {
-    }
-    // small needs a different name in blender than the large engine
-    // but the exporter also appends _Small, so...
-    [MyEntityComponentDescriptor(typeof(MyObjectBuilder_UpgradeModule), false, "HoverRail_Engine_Small_Small")]
-    public class HoverRailEngineSmall : HoverRailEngine
+    [MyEntityComponentDescriptor(typeof(MyObjectBuilder_UpgradeModule), false, "HoverRail_SmallHoverEngineSmall")]
+    public class HoverEngineSmall3x1 : HoverEngine
     {
     }
 
-    [MyEntityComponentDescriptor(typeof(MyObjectBuilder_UpgradeModule), false, "HoverRail_LargeHoverEngine")]
-    public class HoverEngineLarge : HoverRailEngine
-    {
-    }
-
-    [MyEntityComponentDescriptor(typeof(MyObjectBuilder_UpgradeModule), false, "HoverRail_SmallHoverEngine")]
-    public class HoverEngineSmall : HoverRailEngine
-    {
-    }
-
-    static class EngineUI
+    static class EngineUIMini
     {
         public static bool initialized = false;
         public static IMyTerminalControlSlider forceSlider, heightSlider, damperSlider;
         public static IMyTerminalAction lowerHeightAction, raiseHeightAction;
         public static IMyTerminalControlOnOffSwitch soundOnOffSwitch, horizontalForceSwitch;
 
+        public static float DefaultHeightM = 0.9f;
+        public static float DefaultForceMWN = 10000.0f;
+
         public static bool BlockIsEngine(IMyTerminalBlock block)
         {
-            return block.BlockDefinition.SubtypeId == "HoverRail_Engine_Large"
-                || block.BlockDefinition.SubtypeId == "HoverRail_Engine_Small_Small"
-                || block.BlockDefinition.SubtypeId == "HoverRail_LargeHoverEngine"
-                || block.BlockDefinition.SubtypeId == "HoverRail_SmallHoverEngine";
+            return block.BlockDefinition.SubtypeId == "HoverRail_SmallHoverEngineSmall";
         }
 
         public static float LogRound(float f)
@@ -392,14 +368,14 @@ namespace HoverRail
 
         public static void LowerHeightAction(IMyTerminalBlock block)
         {
-            float height = (float)SettingsStore.Get(block, "height_offset", 1.25f);
+            float height = (float)SettingsStore.Get(block, "height_offset", DefaultHeightM);
             height = Math.Max(0.1f, (float)Math.Round(height - 0.1f, 1));
             SettingsStore.Set(block, "height_offset", height);
         }
 
         public static void RaiseHeightAction(IMyTerminalBlock block)
         {
-            float height = (float)SettingsStore.Get(block, "height_offset", 1.25f);
+            float height = (float)SettingsStore.Get(block, "height_offset", DefaultHeightM);
             height = Math.Min(2.5f, (float)Math.Round(height + 0.1f, 1));
             SettingsStore.Set(block, "height_offset", height);
         }
@@ -433,22 +409,22 @@ namespace HoverRail
             forceSlider = MyAPIGateway.TerminalControls.CreateControl<IMyTerminalControlSlider, IMyUpgradeModule>("HoverRail_ForceLimit");
             forceSlider.Title = MyStringId.GetOrCompute("Force Limit");
             forceSlider.Tooltip = MyStringId.GetOrCompute("The amount of force applied to align this motor with the track.");
-            forceSlider.SetLogLimits(10000.0f, 300000000.0f);
+            forceSlider.SetLogLimits(10000.0f, 30000000.0f);
             forceSlider.SupportsMultipleBlocks = true;
-            forceSlider.Getter = b => (float)SettingsStore.Get(b, "force_slider", 100000.0f);
+            forceSlider.Getter = b => (float)SettingsStore.Get(b, "force_slider", DefaultForceMWN);
             forceSlider.Setter = (b, v) => SettingsStore.Set(b, "force_slider", (float)LogRound(v));
-            forceSlider.Writer = (b, result) => result.Append(String.Format("{0}N", SIFormat((float)SettingsStore.Get(b, "force_slider", 100000.0f))));
+            forceSlider.Writer = (b, result) => result.Append(String.Format("{0}N", SIFormat((float)SettingsStore.Get(b, "force_slider", DefaultForceMWN))));
             forceSlider.Visible = BlockIsEngine;
             MyAPIGateway.TerminalControls.AddControl<IMyUpgradeModule>(forceSlider);
 
             heightSlider = MyAPIGateway.TerminalControls.CreateControl<IMyTerminalControlSlider, IMyUpgradeModule>("HoverRail_HeightOffset");
             heightSlider.Title = MyStringId.GetOrCompute("Height Offset");
             heightSlider.Tooltip = MyStringId.GetOrCompute("The height we float above the track.");
-            heightSlider.SetLimits(0.3f, 2.5f);
+            heightSlider.SetLimits(0.6f, 1.5f);
             heightSlider.SupportsMultipleBlocks = true;
-            heightSlider.Getter = b => (float)SettingsStore.Get(b, "height_target", 1.25f);
+            heightSlider.Getter = b => (float)SettingsStore.Get(b, "height_target", DefaultHeightM);
             heightSlider.Setter = (b, v) => SettingsStore.Set(b, "height_target", (float)Math.Round(v, 3));
-            heightSlider.Writer = (b, result) => result.Append(String.Format("{0}m", (float)SettingsStore.Get(b, "height_target", 1.25f)));
+            heightSlider.Writer = (b, result) => result.Append(String.Format("{0}m", (float)SettingsStore.Get(b, "height_target", DefaultHeightM)));
             heightSlider.Visible = BlockIsEngine;
             MyAPIGateway.TerminalControls.AddControl<IMyUpgradeModule>(heightSlider);
 
@@ -459,7 +435,7 @@ namespace HoverRail
             damperSlider.SupportsMultipleBlocks = true;
             damperSlider.Getter = b => (float)SettingsStore.Get(b, "dampen_force", 0.5f);
             damperSlider.Setter = (b, v) => SettingsStore.Set(b, "dampen_force", (float)Math.Round(v, 1));
-            damperSlider.Writer = (b, result) => result.Append(String.Format("{0}", (float)SettingsStore.Get(b, "dampen_force", 0.5f)));
+            damperSlider.Writer = (b, result) => result.Append(String.Format("{0}", SIFormat((float)SettingsStore.Get(b, "dampen_force", 0.5f))));
             damperSlider.Visible = BlockIsEngine;
             MyAPIGateway.TerminalControls.AddControl<IMyUpgradeModule>(damperSlider);
 
@@ -469,7 +445,7 @@ namespace HoverRail
             lowerHeightAction.Writer = (b, builder) =>
             {
                 builder.Clear();
-                builder.Append(String.Format("{0} -", (float)SettingsStore.Get(b, "height_offset", 1.25f)));
+                builder.Append(String.Format("{0} -", (float)SettingsStore.Get(b, "height_offset", DefaultHeightM)));
             };
             MyAPIGateway.TerminalControls.AddAction<IMyUpgradeModule>(lowerHeightAction);
 
@@ -479,7 +455,7 @@ namespace HoverRail
             raiseHeightAction.Writer = (b, builder) =>
             {
                 builder.Clear();
-                builder.Append(String.Format("{0} +", (float)SettingsStore.Get(b, "height_offset", 1.25f)));
+                builder.Append(String.Format("{0} +", (float)SettingsStore.Get(b, "height_offset", DefaultHeightM)));
             };
             MyAPIGateway.TerminalControls.AddAction<IMyUpgradeModule>(raiseHeightAction);
 

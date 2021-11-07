@@ -1,3 +1,4 @@
+using VRage.Game;
 using VRageMath;
 
 namespace HoverRail {
