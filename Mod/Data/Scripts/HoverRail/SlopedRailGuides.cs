@@ -37,8 +37,8 @@ namespace HoverRail
 			this.adjustMatrix = MatrixD.CreateTranslation(0, -1.25, 0) * MatrixD.CreateRotationZ(-angle);
 			this.unadjustMatrix = MatrixD.Invert(this.adjustMatrix);
 		}
-		public override bool getGuidance(Vector3D pos, bool horizontalForce, ref Vector3D guide, ref float weight, float height) {
-			if (!base.getGuidance(pos, horizontalForce, ref guide, ref weight, height)) return false;
+		public override bool GetGuidance(Vector3D pos, bool horizontalForce, ref Vector3D guide, ref float weight, float height) {
+			if (!base.GetGuidance(pos, horizontalForce, ref guide, ref weight, height)) return false;
 			// size: 5x2x1, meaning 12.5 x 5 x 2.5, slope of -1/5
 			// rail begins at x=-6.25 y=1.25 and goes to x=6.25 y=-1.25
 			
@@ -63,8 +63,8 @@ namespace HoverRail
 			double dx = u - x, dy = v - y;
 			return dx * dx + dy * dy;
 		}
-		public override bool getGuidance(Vector3D pos, bool horizontalForce, ref Vector3D guide, ref float weight, float height) {
-			if (!base.getGuidance(pos, horizontalForce, ref guide, ref weight, height)) return false;
+		public override bool GetGuidance(Vector3D pos, bool horizontalForce, ref Vector3D guide, ref float weight, float height) {
+			if (!base.GetGuidance(pos, horizontalForce, ref guide, ref weight, height)) return false;
 			// size: 5x2x1, meaning 12.5 x 5 x 2.5
 			// approximated by y = -(x+6.25)^2*0.008, see http://tinyurl.com/gnm5akr
 			// for X flip, see below
@@ -98,8 +98,8 @@ namespace HoverRail
 			double dx = u - x, dy = v - y;
 			return dx * dx + dy * dy;
 		}
-		public override bool getGuidance(Vector3D pos, bool horizontalForce, ref Vector3D guide, ref float weight, float height) {
-			if (!base.getGuidance(pos, horizontalForce, ref guide, ref weight, height)) return false;
+		public override bool GetGuidance(Vector3D pos, bool horizontalForce, ref Vector3D guide, ref float weight, float height) {
+			if (!base.GetGuidance(pos, horizontalForce, ref guide, ref weight, height)) return false;
 			// size: 5x1x1, meaning 12.5 x 2.5 x 2.5
 			// approximated by y = (x+6.25)^2*0.008-2.5, see http://tinyurl.com/j9q6fc4
 			// except with flipped x because whyy

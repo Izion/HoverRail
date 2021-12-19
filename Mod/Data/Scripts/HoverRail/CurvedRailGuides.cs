@@ -9,8 +9,8 @@ namespace HoverRail {
 		public Curve90_RailGuide(IMyCubeBlock cubeBlock, int size) : base(cubeBlock) {
 			this.size = size;
 		}
-		public override bool getGuidance(Vector3D pos, bool horizontalForce, ref Vector3D guide, ref float weight, float height) {
-			if (!base.getGuidance(pos, horizontalForce, ref guide, ref weight, height)) return false;
+		public override bool GetGuidance(Vector3D pos, bool horizontalForce, ref Vector3D guide, ref float weight, float height) {
+			if (!base.GetGuidance(pos, horizontalForce, ref guide, ref weight, height)) return false;
 
 			var localCoords = Vector3D.Transform(pos, this.cubeBlock.WorldMatrixNormalizedInv);
 
@@ -104,8 +104,8 @@ namespace HoverRail {
 			
 			return true;
 		}
-		public override bool getGuidance(Vector3D pos, bool horizontalForce, ref Vector3D guide, ref float weight, float height) {
-			if (!base.getGuidance(pos, horizontalForce, ref guide, ref weight, height)) return false;
+		public override bool GetGuidance(Vector3D pos, bool horizontalForce, ref Vector3D guide, ref float weight, float height) {
+			if (!base.GetGuidance(pos, horizontalForce, ref guide, ref weight, height)) return false;
 			
 			var localCoords = Vector3D.Transform(pos, this.cubeBlock.WorldMatrixNormalizedInv);
 			bool outerCurve;

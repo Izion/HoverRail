@@ -40,8 +40,8 @@ namespace HoverRail {
 			guide += Vector3D.Transform(localRail, cubeMatrix) * myWeight;
 			return true;
 		}
-		public override bool getGuidance(Vector3D pos, bool horizontalForce, ref Vector3D guide, ref float weight, float height) {
-			if (!base.getGuidance(pos, horizontalForce, ref guide, ref weight, height)) return false;
+		public override bool GetGuidance(Vector3D pos, bool horizontalForce, ref Vector3D guide, ref float weight, float height) {
+			if (!base.GetGuidance(pos, horizontalForce, ref guide, ref weight, height)) return false;
 			
 			var localCoords = Vector3D.Transform(pos, this.cubeBlock.WorldMatrixNormalizedInv);
 			return straight_guidance(halfsize, horizontalForce, this.cubeBlock.WorldMatrix, localCoords, ref guide, ref weight, height);

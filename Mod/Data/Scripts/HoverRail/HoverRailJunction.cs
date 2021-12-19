@@ -174,9 +174,9 @@ namespace HoverRail
             weight += mix_weight;
         }
 
-        public override bool getGuidance(Vector3D pos, bool horizontalForce, ref Vector3D guide, ref float weight, float height)
+        public override bool GetGuidance(Vector3D pos, bool horizontalForce, ref Vector3D guide, ref float weight, float height)
         {
-            if (!base.getGuidance(pos, horizontalForce, ref guide, ref weight, height)) return false;
+            if (!base.GetGuidance(pos, horizontalForce, ref guide, ref weight, height)) return false;
 
             var localCoords = Vector3D.Transform(pos, this.cubeBlock.WorldMatrixNormalizedInv);
             // MyLog.Default.WriteLine(String.Format("local coord is {0} [{1}]", localCoords, flip_curve_z));
