@@ -128,7 +128,7 @@ namespace HoverRail
             // People kept reporting that the engine hum was audible at any distance.
             // I have no fucking clue why that would be the case, but it was probably super annoying, so the hum is just off now.
             // ---
-            // Added this as a terminal option may have been a game bug - testing
+            // Added this as a terminal option may have been a game bug
 
             if ((bool)SettingsStore.Get(Entity, "sound_toggle", false))
             {
@@ -144,8 +144,8 @@ namespace HoverRail
                 {
                     if (state_changed || !engine_sound.IsPlaying)
                     {
-                        engine_sound.StoppedPlaying -= QueueLoopSound;
-                        engine_sound.StopSound(true); // ... why??
+                        //engine_sound.StoppedPlaying -= QueueLoopSound;
+                        //engine_sound.StopSound(true); // ... why?? - Tbh no idea will remove
                         engine_sound.PlaySingleSound(sound_engine_start, true);
                         engine_sound.StoppedPlaying += QueueLoopSound;
                     }
@@ -205,6 +205,7 @@ namespace HoverRail
             HashSet<RailGuide> lostGuides = new HashSet<RailGuide>();
             RailGuide anyRailGuide = null;
 
+
             foreach (var guide in activeRailGuides)
             {
                 if (!guide.GetGuidance(hoverCenter, horizontalForce, ref rail_pos, ref weight_sum, height))
@@ -253,8 +254,8 @@ namespace HoverRail
                 UpdatePowerUsage(0);
                 UpdatePowerState(true); // powered but idle
 
-                if (lockCount > lockTimeout)
-                    Block.Enabled = false;
+                //if (lockCount > lockTimeout) // Take another look at this some reports of engines not working at all? :/
+                //    Block.Enabled = false;
 
                 return;
             }
